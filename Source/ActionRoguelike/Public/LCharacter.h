@@ -20,6 +20,9 @@ public:
 	ALCharacter();
 
 protected:
+	UPROPERTY(EditAnywhere)//确保下面这个组件在编辑器中可见其属性
+	TSubclassOf<AActor> ProjectilesClass;//因为魔法飞弹的父类也是AActor所以这里的这个Pro是可以接受魔法飞弹类的
+protected:
 
 	UPROPERTY(visibleAnywhere)//这是声明在UE编辑器中让这个组件的属性能够被蓝图等组件可见可见
 	USpringArmComponent* SpringArmComp;//这是一个弹簧臂的指针
@@ -27,11 +30,17 @@ protected:
 	UPROPERTY(visibleAnywhere)
 	UCameraComponent* CameraComp;//这是一个摄像机类的指针
 
-	//声明处理前进的函数
-	void MoveForward(float num);
+	//声明处理前进/后退的函数
+	void MoveForward(float value);
+
+	//声明处理左右的函数
+	void MoveRight(float value);
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	//处理释放魔法飞弹的函数
+	void PrimaryAttack();
 
 public:	
 	// Called every frame
