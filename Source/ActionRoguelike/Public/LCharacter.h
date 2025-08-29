@@ -1,14 +1,18 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "SInteractionComponent.h"
 #include "LCharacter.generated.h"
 
-class USpringArmComponent;
-class UCameraComponent;//ÉùÃ÷ÕâÁ½¸öÀà
+/* Unreal Engine C++ ç¼–ç¨‹ä¸­ï¼Œ#include "æ–‡ä»¶å.generated.h"è¿™æ¡è¯­å¥â€‹â€‹å¿…é¡»â€‹â€‹æ”¾åœ¨å…¶å¤´æ–‡ä»¶ï¼ˆ.hæ–‡ä»¶ï¼‰ä¸­æ‰€æœ‰å…¶ä»– #includeè¯­å¥çš„â€‹â€‹æœ€åé¢â€‹â€‹ã€‚*/
 
+
+class USpringArmComponent;
+class UCameraComponent;
+class USInteractionComponent;
 
 UCLASS()
 class ACTIONROGUELIKE_API ALCharacter : public ACharacter
@@ -20,27 +24,38 @@ public:
 	ALCharacter();
 
 protected:
-	UPROPERTY(EditAnywhere)//È·±£ÏÂÃæÕâ¸ö×é¼şÔÚ±à¼­Æ÷ÖĞ¿É¼ûÆäÊôĞÔ
-	TSubclassOf<AActor> ProjectilesClass;//ÒòÎªÄ§·¨·Éµ¯µÄ¸¸ÀàÒ²ÊÇAActorËùÒÔÕâÀïµÄÕâ¸öProÊÇ¿ÉÒÔ½ÓÊÜÄ§·¨·Éµ¯ÀàµÄ
+	
+	UPROPERTY(EditAnywhere,Category = "Attack")//ç¡®ä¿ä¸‹é¢è¿™ä¸ªç»„ä»¶åœ¨ç¼–è¾‘å™¨ä¸­å¯è§å…¶å±æ€§
+	TSubclassOf<AActor> ProjectilesClass;//å› ä¸ºé­”æ³•é£å¼¹çš„çˆ¶ç±»ä¹Ÿæ˜¯AActoræ‰€ä»¥è¿™é‡Œçš„è¿™ä¸ªProæ˜¯å¯ä»¥æ¥å—é­”æ³•é£å¼¹ç±»çš„
+
+	UPROPERTY(EditAnywhere,Category = "Attack")
+	UAnimMontage* AttackAni;
 protected:
 
-	UPROPERTY(visibleAnywhere)//ÕâÊÇÉùÃ÷ÔÚUE±à¼­Æ÷ÖĞÈÃÕâ¸ö×é¼şµÄÊôĞÔÄÜ¹»±»À¶Í¼µÈ×é¼ş¿É¼û¿É¼û
-	USpringArmComponent* SpringArmComp;//ÕâÊÇÒ»¸öµ¯»É±ÛµÄÖ¸Õë
+	UPROPERTY(visibleAnywhere)//è¿™æ˜¯å£°æ˜åœ¨UEç¼–è¾‘å™¨ä¸­è®©è¿™ä¸ªç»„ä»¶çš„å±æ€§èƒ½å¤Ÿè¢«è“å›¾ç­‰ç»„ä»¶å¯è§å¯è§
+	USpringArmComponent* SpringArmComp;//è¿™æ˜¯ä¸€ä¸ªå¼¹ç°§è‡‚çš„æŒ‡é’ˆ
 
 	UPROPERTY(visibleAnywhere)
-	UCameraComponent* CameraComp;//ÕâÊÇÒ»¸öÉãÏñ»úÀàµÄÖ¸Õë
+	UCameraComponent* CameraComp;//è¿™æ˜¯ä¸€ä¸ªæ‘„åƒæœºç±»çš„æŒ‡é’ˆ
 
-	//ÉùÃ÷´¦ÀíÇ°½ø/ºóÍËµÄº¯Êı
+	UPROPERTY(visibleAnywhere)
+	USInteractionComponent* InteractionComp;//å°†äº¤äº’çš„åŠŸèƒ½äº¤ç»™äººç‰©
+
+
+	//å£°æ˜å¤„ç†å‰è¿›/åé€€çš„å‡½æ•°
 	void MoveForward(float value);
 
-	//ÉùÃ÷´¦Àí×óÓÒµÄº¯Êı
+	//å£°æ˜å¤„ç†å·¦å³çš„å‡½æ•°
 	void MoveRight(float value);
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	//´¦ÀíÊÍ·ÅÄ§·¨·Éµ¯µÄº¯Êı
+	//å¤„ç†é‡Šæ”¾é­”æ³•é£å¼¹çš„å‡½æ•°
 	void PrimaryAttack();
+
+	//äº¤äº’å®ç®±çš„å‡½æ•°
+	void PrimaryInteract();
 
 public:	
 	// Called every frame

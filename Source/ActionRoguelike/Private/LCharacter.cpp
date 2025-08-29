@@ -20,6 +20,8 @@ ALCharacter::ALCharacter()
 	CameraComp->SetupAttachment(SpringArmComp);//将摄像机安装到弹簧臂上面
 	//上面的步骤如果root是一个模型这就完成了一个基本的第三人称游戏的视角
 
+	InteractionComp = CreateDefaultSubobject<USInteractionComponent>("InteractionCom");//实例化交互功能的类
+
 	GetCharacterMovement()->bOrientRotationToMovement = true;//让摄像机的旋转通过弹簧臂完全跟随控制器的输入。这意味着我可以​​自由地用鼠标环顾四周​​，摄像机镜头会左右、上下转动。
 	bUseControllerRotationYaw = false;//这个代码和上一行代码相互帮助，这个代码的作用是解耦角色的身体朝向和摄像机的朝向，让其实现黑魂那种摄像机往后依旧可以往前的操作视角
 
@@ -63,6 +65,9 @@ void ALCharacter::BeginPlay()
 //生成魔法飞弹抛射物的代码
 void ALCharacter::PrimaryAttack()
 {
+	//这里
+	PlayAnimMontage(AttackAni);//这个函数能够为我们播放一个攻击动画
+
 	/*获取角色骨骼中的某一个位置让魔法飞弹从这个位置开始进行生成*/
 	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
 
@@ -83,6 +88,14 @@ void ALCharacter::PrimaryAttack()
 	​​SpawnActor<AActor>​​：这是一个模板函数，用于在游戏世界中生成一个新的Actor。<AActor>是生成的Actor类型，这里使用基类，意味着它可以生成任何继承自 AActor的类。
 	SpawnTM​​：之前创建的变换，决定了新Actor的位置和旋转。
 	SpawnParams​​：之前设置的生成参数，决定了碰撞处理方式。*/
+}
+
+void ALCharacter::PrimaryInteract()
+{
+	if (InteractionComp)
+	{
+		InteractionComp->PrimaryInteract();
+	}
 }
 
 // Called every frame
@@ -108,5 +121,6 @@ void ALCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	//实现当玩家按下某一个被我映射的按键之后玩家会释放出魔法飞弹
 	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ALCharacter::PrimaryAttack);
 
+	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &ALCharacter::PrimaryInteract);
 }
 
