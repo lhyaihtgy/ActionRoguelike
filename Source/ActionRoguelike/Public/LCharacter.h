@@ -4,21 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+
 #include "SInteractionComponent.h"
-#include "LCharacter.generated.h"
-
+#include "LCharacter.generated.h" 
 /* Unreal Engine C++ 编程中，#include "文件名.generated.h"这条语句​​必须​​放在其头文件（.h文件）中所有其他 #include语句的​​最后面​​。*/
-
-
 class USpringArmComponent;
 class UCameraComponent;
 class USInteractionComponent;
-
+class USAttributeComponent;
 UCLASS()
 class ACTIONROGUELIKE_API ALCharacter : public ACharacter
 {
 	GENERATED_BODY()
-
 public:
 	// Sets default values for this character's properties
 	ALCharacter();
@@ -30,17 +27,21 @@ protected:
 
 	UPROPERTY(EditAnywhere,Category = "Attack")
 	UAnimMontage* AttackAni;
+
+	FTimerHandle FTimerHandle_PrimaryAttack;//计时器
 protected:
 
-	UPROPERTY(visibleAnywhere)//这是声明在UE编辑器中让这个组件的属性能够被蓝图等组件可见可见
+	UPROPERTY(VisibleAnywhere)//这是声明在UE编辑器中让这个组件的属性能够被蓝图等组件可见可见
 	USpringArmComponent* SpringArmComp;//这是一个弹簧臂的指针
 
-	UPROPERTY(visibleAnywhere)
+	UPROPERTY(VisibleAnywhere)
 	UCameraComponent* CameraComp;//这是一个摄像机类的指针
 
-	UPROPERTY(visibleAnywhere)
+	UPROPERTY(VisibleAnywhere)
 	USInteractionComponent* InteractionComp;//将交互的功能交给人物
 
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category = "Componts")
+	USAttributeComponent* AttributeComp;
 
 	//声明处理前进/后退的函数
 	void MoveForward(float value);
@@ -56,6 +57,8 @@ protected:
 
 	//交互宝箱的函数
 	void PrimaryInteract();
+	//让飞弹生成延后让飞弹和攻击动画匹配的函数
+	void PrimaryAttack_TimeElapsed();
 
 public:	
 	// Called every frame

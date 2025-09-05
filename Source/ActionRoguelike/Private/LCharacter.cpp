@@ -5,6 +5,7 @@
 #include "GameFramework/SpringArmComponent.h" // 提供 USpringArmComponent 类的定义
 #include "Camera/CameraComponent.h"          // 提供 UCameraComponent 类的定义
 #include "GameFramework/characterMovementComponent.h"
+#include "SAttributeComponent.h"
 
 // Sets default values
 ALCharacter::ALCharacter()
@@ -21,6 +22,8 @@ ALCharacter::ALCharacter()
 	//上面的步骤如果root是一个模型这就完成了一个基本的第三人称游戏的视角
 
 	InteractionComp = CreateDefaultSubobject<USInteractionComponent>("InteractionCom");//实例化交互功能的类
+
+	AttributeComp = CreateDefaultSubobject<USAttributeComponent>("AttributesCom");
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;//让摄像机的旋转通过弹簧臂完全跟随控制器的输入。这意味着我可以​​自由地用鼠标环顾四周​​，摄像机镜头会左右、上下转动。
 	bUseControllerRotationYaw = false;//这个代码和上一行代码相互帮助，这个代码的作用是解耦角色的身体朝向和摄像机的朝向，让其实现黑魂那种摄像机往后依旧可以往前的操作视角
@@ -66,28 +69,33 @@ void ALCharacter::BeginPlay()
 void ALCharacter::PrimaryAttack()
 {
 	//这里
-	PlayAnimMontage(AttackAni);//这个函数能够为我们播放一个攻击动画
+	PlayAnimMontage(AttackAni);//这个函数能够为我们播放一个攻击动画,但是因为飞弹的生成是和手臂相关的，导致当我按下攻击的时候，飞弹已经生成但是攻击动画还在播出导致出现了问题
+	//，其中一个解决方法是当动画准备好之后去通知生成事件，这里暂不做考虑
+	//另外一个就是延迟生成的时间让其在攻击动画完成的前一瞬间在手臂生成飞弹
+	//这里加入计时器延时
+	GetWorldTimerManager().SetTimer(FTimerHandle_PrimaryAttack, this, &ALCharacter::PrimaryAttack_TimeElapsed,0.2f);
+	//GetWorldTimerManager().ClearTimer(FTimerHandle_PrimaryAttack);//这个代码是清除这个计时器，如果在你的角色死亡之后不再需要这个计时器相应了
+	//以下生成飞弹的代码，在需要匹配攻击动画的版本需要将下面的逻辑放入到计时器的回调函数中，方便在计时器结束后进行回调
+	///*获取角色骨骼中的某一个位置让魔法飞弹从这个位置开始进行生成*/
+	//FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
 
-	/*获取角色骨骼中的某一个位置让魔法飞弹从这个位置开始进行生成*/
-	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+	//FTransform SpawnTM = FTransform(GetControlRotation(), HandLocation);//这个代码让魔法飞弹从手臂出进行生成,第二版的修正
+	///*现在的第一版代码虽然生成了一个飞弹但是并不是从手臂上生成的需要让其在手臂上进行生成*/
+	////FTransform SpawnTM = FTransform(GetControlRotation(), GetActorLocation());//第一版并不是从手臂的骨骼上生成的魔法飞弹创建了一个变换定义了新物体在游戏世界中的位置和旋转
+	////GetControlRotation:获取当前角色（ASCharacter）在世界空间中的坐标位置。这将是抛射物生成的​​起点​​
+	////​​GetControlRotation()​​：获取玩家控制器（Player Controller）的旋转。这个旋转直接由玩家的鼠标控制，代表了​​摄像机的朝向​​。这将是抛射物生成的​​初始方向​​。
 
-	FTransform SpawnTM = FTransform(GetControlRotation(), HandLocation);//这个代码让魔法飞弹从手臂出进行生成,第二版的修正
-	/*现在的第一版代码虽然生成了一个飞弹但是并不是从手臂上生成的需要让其在手臂上进行生成*/
-	//FTransform SpawnTM = FTransform(GetControlRotation(), GetActorLocation());//第一版并不是从手臂的骨骼上生成的魔法飞弹创建了一个变换定义了新物体在游戏世界中的位置和旋转
-	//GetControlRotation:获取当前角色（ASCharacter）在世界空间中的坐标位置。这将是抛射物生成的​​起点​​
-	//​​GetControlRotation()​​：获取玩家控制器（Player Controller）的旋转。这个旋转直接由玩家的鼠标控制，代表了​​摄像机的朝向​​。这将是抛射物生成的​​初始方向​​。
+	//FActorSpawnParameters SpawnParams;//创建了一个（生成Actor）的结构体，在生成 Actor 时，通过设置其成员变量，向引擎传递额外的生成信息，以自定义生成过程。
 
-	FActorSpawnParameters SpawnParams;//创建了一个（生成Actor）的结构体，在生成 Actor 时，通过设置其成员变量，向引擎传递额外的生成信息，以自定义生成过程。
-
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;//后面的参数是一个枚举值代表总是生成，无视碰撞,这个函数设置了生成是遇到碰撞的处理方式
-	//后面的参数保证了即使存在碰撞也能够生成，后裔的移动和碰撞再由抛射物本身的组件来处理
+	//SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;//后面的参数是一个枚举值代表总是生成，无视碰撞,这个函数设置了生成是遇到碰撞的处理方式
+	////后面的参数保证了即使存在碰撞也能够生成，后裔的移动和碰撞再由抛射物本身的组件来处理
 
 
-	GetWorld()->SpawnActor<AActor>(ProjectilesClass, SpawnTM, SpawnParams);
-	/*​​GetWorld()​​：获取当前的游戏世界对象，生成Actor需要这个上下文。
-	​​SpawnActor<AActor>​​：这是一个模板函数，用于在游戏世界中生成一个新的Actor。<AActor>是生成的Actor类型，这里使用基类，意味着它可以生成任何继承自 AActor的类。
-	SpawnTM​​：之前创建的变换，决定了新Actor的位置和旋转。
-	SpawnParams​​：之前设置的生成参数，决定了碰撞处理方式。*/
+	//GetWorld()->SpawnActor<AActor>(ProjectilesClass, SpawnTM, SpawnParams);
+	///*​​GetWorld()​​：获取当前的游戏世界对象，生成Actor需要这个上下文。
+	//​​SpawnActor<AActor>​​：这是一个模板函数，用于在游戏世界中生成一个新的Actor。<AActor>是生成的Actor类型，这里使用基类，意味着它可以生成任何继承自 AActor的类。
+	//SpawnTM​​：之前创建的变换，决定了新Actor的位置和旋转。
+	//SpawnParams​​：之前设置的生成参数，决定了碰撞处理方式。*/
 }
 
 void ALCharacter::PrimaryInteract()
@@ -95,6 +103,34 @@ void ALCharacter::PrimaryInteract()
 	if (InteractionComp)
 	{
 		InteractionComp->PrimaryInteract();
+	}
+}
+
+void ALCharacter::PrimaryAttack_TimeElapsed()
+{
+	if (ensureAlways(ProjectilesClass))////确保在UE4编译器中Pro类已经被设置了而不是一个空指针，ensure只会在第一次运行时触发，之后不会触发，如果要一直触发需要使用ensurealways
+		//如果这里使用check那么在判断pro为空程序会直接崩溃，而sure只会记录错误然后继续执行
+	{
+		/*获取角色骨骼中的某一个位置让魔法飞弹从这个位置开始进行生成*/
+		FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+
+		FTransform SpawnTM = FTransform(GetControlRotation(), HandLocation);//这个代码让魔法飞弹从手臂出进行生成,第二版的修正
+		/*现在的第一版代码虽然生成了一个飞弹但是并不是从手臂上生成的需要让其在手臂上进行生成*/
+		//FTransform SpawnTM = FTransform(GetControlRotation(), GetActorLocation());//第一版并不是从手臂的骨骼上生成的魔法飞弹创建了一个变换定义了新物体在游戏世界中的位置和旋转
+		//GetControlRotation:获取当前角色（ASCharacter）在世界空间中的坐标位置。这将是抛射物生成的​​起点​​
+		//​​GetControlRotation()​​：获取玩家控制器（Player Controller）的旋转。这个旋转直接由玩家的鼠标控制，代表了​​摄像机的朝向​​。这将是抛射物生成的​​初始方向​​。
+
+		FActorSpawnParameters SpawnParams;//创建了一个（生成Actor）的结构体，在生成 Actor 时，通过设置其成员变量，向引擎传递额外的生成信息，以自定义生成过程。
+
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;//后面的参数是一个枚举值代表总是生成，无视碰撞,这个函数设置了生成是遇到碰撞的处理方式
+		//后面的参数保证了即使存在碰撞也能够生成，后裔的移动和碰撞再由抛射物本身的组件来处理
+		SpawnParams.Instigator = this;//将生成魔法飞弹的类传递给魔法飞弹让魔法飞弹能够忽略对发起者的碰撞检测
+
+		GetWorld()->SpawnActor<AActor>(ProjectilesClass, SpawnTM, SpawnParams);
+		/*​​GetWorld()​​：获取当前的游戏世界对象，生成Actor需要这个上下文。
+		​​SpawnActor<AActor>​​：这是一个模板函数，用于在游戏世界中生成一个新的Actor。<AActor>是生成的Actor类型，这里使用基类，意味着它可以生成任何继承自 AActor的类。
+		SpawnTM​​：之前创建的变换，决定了新Actor的位置和旋转。
+		SpawnParams​​：之前设置的生成参数，决定了碰撞处理方式。*/
 	}
 }
 
@@ -122,5 +158,7 @@ void ALCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ALCharacter::PrimaryAttack);
 
 	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &ALCharacter::PrimaryInteract);
+
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ALCharacter::Jump);
 }
 
