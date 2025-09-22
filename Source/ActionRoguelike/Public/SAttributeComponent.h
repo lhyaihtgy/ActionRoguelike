@@ -27,8 +27,8 @@ protected:
 ​​	BlueprintReadWrite​​ - 在蓝图脚本中具有读写权限。
 ​​	Category = ""​​ - 该分类仅用于详情面板和蓝图上下文菜单的显示组织。类似于文件夹，在蓝图的细节面板中category的名字是一个属性，而所有该属性的变量/对象都会在该属性面板下*/
 
-	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
-	float health;//
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly, Category = "Attributes")
+	float health;
 
 
 public:	
