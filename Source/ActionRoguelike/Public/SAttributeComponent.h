@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+// 关键修复：委托声明必须放在.generated.h之前！
 #include "SAttributeComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnHealthChanged,AActor*,InstigatorActor,USAttributeComponent*,OwningComp,float,NewHealth,float,Delta);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ACTIONROGUELIKE_API USAttributeComponent : public UActorComponent/*这个类专门用来管理各种属性buff，不如血量*/
@@ -32,6 +34,9 @@ protected:
 
 
 public:	
+
+	UPROPERTY(BlueprintAssignable)
+	FOnHealthChanged OnHealthChanged;
 
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
 	bool ApplyHealthChange(float Delta);
