@@ -43,6 +43,17 @@ protected:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category = "Componts")
 	USAttributeComponent* AttributeComp;
 
+	void SpawnProjectile(TSubclassOf<AActor> ClassTospawn);
+
+	void Dash();
+	void Dash_TimeElapsed();
+
+	void PrimaryAttack();
+	void PrimaryAttack_TimeElapsed();
+
+	void BlackHoleAttack();
+	void BlackholeAttack_TimeElapsed();
+
 	//声明处理前进/后退的函数
 	void MoveForward(float value);
 

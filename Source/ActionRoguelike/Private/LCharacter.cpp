@@ -59,6 +59,60 @@ void ALCharacter::MoveRight(float value)//第一版本和前进后退函数是�
 	//AddMovementInput(GetActorRightVector(), value);//第一版本和前进后退函数是一致的
 }
 
+/*
+*该函数的主要逻辑
+*获取发射位置​​（手部插槽 "Muzzle_01"）。
+​​*检测目标点​​（摄像机前方 5000 单位或命中点）。
+​​*计算投射物朝向​​（使投射物飞向目标点）。
+​​*生成投射物​​（使用 SpawnActor实例化投射物）。
+*/
+void ALCharacter::SpawnProjectile(TSubclassOf<AActor> ClassToSpawn)
+{
+	if (ensureAlways(ClassTospawn))//确保施法者指针存在
+	{
+		FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");//得到该施法者手部的坐标
+
+
+		//设置投射物的生成参数
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;//即使生成位置被阻挡，也会强制生成投射物（避免因碰撞问题导致投射物无法生成）。
+		SpawnParams.Instigator = this;//设置当前角色为投射物的 Instigator（施法者），用于后续伤害计算（如 UGameplayStatics::ApplyDamage）。
+
+		//设置碰撞检测参数​
+		FCollisionShape Shape;
+		Shape.SetSphere(20.0f);//// 定义一个半径为 20 的球形碰撞检测范围
+
+		FCollisionQueryParams Parms;
+		Parms.AddIgnoredActor(this);//// 忽略当前角色，避免投射物误伤自己
+
+		FCollisionObjectQueryParams ObjParms;
+		ObjParms.AddObjectTypesToQuery(ECC_WorldDynamic);// 检测动态物体（如可移动的 Actor）
+		ObjParms.AddObjectTypesToQuery(ECC_WorldStatic);// 检测静态物体（如墙壁、地面）
+		ObjParms.AddObjectTypesToQuery(ECC_Pawn);// 检测其他角色（Pawn）
+
+		//计算投射方向（射线检测）​​
+		FVector TraceStart = CameraComp->GetComponentLocation();// 射线起点（摄像机位置）
+
+		FVector TraceEnd = CameraComp->GetComponentLocation() + (GetControlRotation().Vector() * 5000);//// 射线终点（摄像机前方 5000 单位）
+
+		FHitResult Hit;//储存命中心下
+
+		// 执行球形射线检测
+		if (GetWorld()->SweepSingleByObjectType(Hit, TraceStart, TraceEnd, FQuat::Identity, ObjParms, Shape, Parms))
+		{
+			TraceEnd = Hit.ImpactPoint;// 如果命中物体，则投射物朝向命中点
+		}
+
+		//计算投射物旋转
+		//TraceEnd - HandLocation​​：计算从手部位置到目标点的方向向量。FRotationMatrix::MakeFromX​​：生成一个旋转矩阵，使 X 轴朝向目标方向。​​作用​​：确保投射物朝向正确的飞行方向。
+		FRotator ProjRotation = FRotationMatrix::MakeFromX(TraceEnd - HandLocation).Rotator();
+		//生成投射物​
+		/*​​FTransform​​：定义投射物的初始位置和旋转。SpawnActor​​：在 HandLocation位置生成投射物，并设置其旋转朝向目标方向。*/
+		FTransform SpawnTM = FTransform(ProjRotation, HandLocation);
+
+		GetWorld()->SpawnActor<AActor>(ClassToSpawn, SpawnTM, SpawnParams);
+	}
+}
 // Called when the game starts or when spawned
 void ALCharacter::BeginPlay()
 {
