@@ -1,11 +1,11 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "LCharacter.h"
 #include "GameFramework/SpringArmComponent.h" // 提供 USpringArmComponent 类的定义
 #include "Camera/CameraComponent.h"          // 提供 UCameraComponent 类的定义
 #include "GameFramework/characterMovementComponent.h"
 #include "SAttributeComponent.h"
+#include "SDashProjectile.h"
 
 // Sets default values
 ALCharacter::ALCharacter()
@@ -68,7 +68,7 @@ void ALCharacter::MoveRight(float value)//第一版本和前进后退函数是�
 */
 void ALCharacter::SpawnProjectile(TSubclassOf<AActor> ClassToSpawn)
 {
-	if (ensureAlways(ClassTospawn))//确保施法者指针存在
+	if (ensureAlways(ClassToSpawn))//确保施法者指针存在
 	{
 		FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");//得到该施法者手部的坐标
 
@@ -112,6 +112,16 @@ void ALCharacter::SpawnProjectile(TSubclassOf<AActor> ClassToSpawn)
 
 		GetWorld()->SpawnActor<AActor>(ClassToSpawn, SpawnTM, SpawnParams);
 	}
+}
+void ALCharacter::Dash()
+{
+	PlayAnimMontage(AttackAni);
+
+	GetWorldTimerManager().SetTimer(TimerHandle_Dash, this, &ALCharacter::Dash_TimeElapsed, AttackAniDelay);
+}
+void ALCharacter::Dash_TimeElapsed()
+{
+	SpawnProjectile(DashProjectileClass);
 }
 // Called when the game starts or when spawned
 void ALCharacter::BeginPlay()
@@ -162,30 +172,44 @@ void ALCharacter::PrimaryInteract()
 
 void ALCharacter::PrimaryAttack_TimeElapsed()
 {
-	if (ensureAlways(ProjectilesClass))////确保在UE4编译器中Pro类已经被设置了而不是一个空指针，ensure只会在第一次运行时触发，之后不会触发，如果要一直触发需要使用ensurealways
-		//如果这里使用check那么在判断pro为空程序会直接崩溃，而sure只会记录错误然后继续执行
-	{
-		/*获取角色骨骼中的某一个位置让魔法飞弹从这个位置开始进行生成*/
-		FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+	//if (ensureAlways(ProjectilesClass))////确保在UE4编译器中Pro类已经被设置了而不是一个空指针，ensure只会在第一次运行时触发，之后不会触发，如果要一直触发需要使用ensurealways
+	//	//如果这里使用check那么在判断pro为空程序会直接崩溃，而sure只会记录错误然后继续执行
+	//{
+	//	/*获取角色骨骼中的某一个位置让魔法飞弹从这个位置开始进行生成*/
+	//	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
 
-		FTransform SpawnTM = FTransform(GetControlRotation(), HandLocation);//这个代码让魔法飞弹从手臂出进行生成,第二版的修正
-		/*现在的第一版代码虽然生成了一个飞弹但是并不是从手臂上生成的需要让其在手臂上进行生成*/
-		//FTransform SpawnTM = FTransform(GetControlRotation(), GetActorLocation());//第一版并不是从手臂的骨骼上生成的魔法飞弹创建了一个变换定义了新物体在游戏世界中的位置和旋转
-		//GetControlRotation:获取当前角色（ASCharacter）在世界空间中的坐标位置。这将是抛射物生成的​​起点​​
-		//​​GetControlRotation()​​：获取玩家控制器（Player Controller）的旋转。这个旋转直接由玩家的鼠标控制，代表了​​摄像机的朝向​​。这将是抛射物生成的​​初始方向​​。
+	//	FTransform SpawnTM = FTransform(GetControlRotation(), HandLocation);//这个代码让魔法飞弹从手臂出进行生成,第二版的修正
+	//	/*现在的第一版代码虽然生成了一个飞弹但是并不是从手臂上生成的需要让其在手臂上进行生成*/
+	//	//FTransform SpawnTM = FTransform(GetControlRotation(), GetActorLocation());//第一版并不是从手臂的骨骼上生成的魔法飞弹创建了一个变换定义了新物体在游戏世界中的位置和旋转
+	//	//GetControlRotation:获取当前角色（ASCharacter）在世界空间中的坐标位置。这将是抛射物生成的​​起点​​
+	//	//​​GetControlRotation()​​：获取玩家控制器（Player Controller）的旋转。这个旋转直接由玩家的鼠标控制，代表了​​摄像机的朝向​​。这将是抛射物生成的​​初始方向​​。
 
-		FActorSpawnParameters SpawnParams;//创建了一个（生成Actor）的结构体，在生成 Actor 时，通过设置其成员变量，向引擎传递额外的生成信息，以自定义生成过程。
+	//	FActorSpawnParameters SpawnParams;//创建了一个（生成Actor）的结构体，在生成 Actor 时，通过设置其成员变量，向引擎传递额外的生成信息，以自定义生成过程。
 
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;//后面的参数是一个枚举值代表总是生成，无视碰撞,这个函数设置了生成是遇到碰撞的处理方式
-		//后面的参数保证了即使存在碰撞也能够生成，后裔的移动和碰撞再由抛射物本身的组件来处理
-		SpawnParams.Instigator = this;//将生成魔法飞弹的类传递给魔法飞弹让魔法飞弹能够忽略对发起者的碰撞检测
+	//	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;//后面的参数是一个枚举值代表总是生成，无视碰撞,这个函数设置了生成是遇到碰撞的处理方式
+	//	//后面的参数保证了即使存在碰撞也能够生成，后裔的移动和碰撞再由抛射物本身的组件来处理
+	//	SpawnParams.Instigator = this;//将生成魔法飞弹的类传递给魔法飞弹让魔法飞弹能够忽略对发起者的碰撞检测
 
-		GetWorld()->SpawnActor<AActor>(ProjectilesClass, SpawnTM, SpawnParams);
-		/*​​GetWorld()​​：获取当前的游戏世界对象，生成Actor需要这个上下文。
-		​​SpawnActor<AActor>​​：这是一个模板函数，用于在游戏世界中生成一个新的Actor。<AActor>是生成的Actor类型，这里使用基类，意味着它可以生成任何继承自 AActor的类。
-		SpawnTM​​：之前创建的变换，决定了新Actor的位置和旋转。
-		SpawnParams​​：之前设置的生成参数，决定了碰撞处理方式。*/
-	}
+	//	GetWorld()->SpawnActor<AActor>(ProjectilesClass, SpawnTM, SpawnParams);
+	//	/*​​GetWorld()​​：获取当前的游戏世界对象，生成Actor需要这个上下文。
+	//	​​SpawnActor<AActor>​​：这是一个模板函数，用于在游戏世界中生成一个新的Actor。<AActor>是生成的Actor类型，这里使用基类，意味着它可以生成任何继承自 AActor的类。
+	//	SpawnTM​​：之前创建的变换，决定了新Actor的位置和旋转。
+	//	SpawnParams​​：之前设置的生成参数，决定了碰撞处理方式。*/
+	//}
+	//以上为第一个版本的生成魔法飞弹的版本，这个版本将所有要做的事情都放在了这个函数中，从头到尾，但是这个逻辑在其他的生成类中依旧会使用，所以这里将这些生成逻辑集合成为了一个函数模板
+	//这个函数直接去调用这个函数模板去进行实例化即可
+	SpawnProjectile(ProjectilesClass);
+}
+
+void ALCharacter::BlackHoleAttack()
+{
+	PlayAnimMontage(AttackAni);//播放前摇动画
+	GetWorldTimerManager().SetTimer(TimeHandle_BlackHole, this, &ALCharacter::BlackholeAttack_TimeElapsed, AttackAniDelay);
+}
+
+void ALCharacter::BlackholeAttack_TimeElapsed()
+{
+	SpawnProjectile(BlackHoleProjectileClass);
 }
 
 // Called every frame
@@ -213,6 +237,10 @@ void ALCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &ALCharacter::PrimaryInteract);
 
+	PlayerInputComponent->BindAction("BlackHoleAttack", IE_Pressed, this, &ALCharacter::BlackHoleAttack);
+
+	PlayerInputComponent->BindAction("Dash", IE_Pressed, this, &ALCharacter::Dash);
+	
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ALCharacter::Jump);
 }
 

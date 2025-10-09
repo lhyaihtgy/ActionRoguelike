@@ -2,6 +2,8 @@
 
 
 #include "SDashProjectile.h"
+#include "Particles/ParticleSystemComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 #include <Runtime/Engine/Classes/Kismet/GameplayStatics.h>
 
 void ASDashProjectile::Explode_Implementation()
@@ -26,7 +28,7 @@ void ASDashProjectile::Explode_Implementation()
 void ASDashProjectile::TeleportInstigator()
 {
 	AActor* ActorToTeleport = GetInstigator();//获取施法者
-	if (ensure(ActorToTeleport))
+	if (ensure(ActorToTeleport))//确保ActorToTeleport是有效的
 	{
 		//保持施法者原有旋转，只改变位置
 		ActorToTeleport->TeleportTo(GetActorLocation(), ActorToTeleport->GetActorRotation(), false, false);//将 Actor 瞬间移动到指定位置??

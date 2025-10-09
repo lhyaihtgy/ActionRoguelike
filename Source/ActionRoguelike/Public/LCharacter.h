@@ -25,10 +25,23 @@ protected:
 	UPROPERTY(EditAnywhere,Category = "Attack")//确保下面这个组件在编辑器中可见其属性
 	TSubclassOf<AActor> ProjectilesClass;//因为魔法飞弹的父类也是AActor所以这里的这个Pro是可以接受魔法飞弹类的
 
-	UPROPERTY(EditAnywhere,Category = "Attack")
-	UAnimMontage* AttackAni;
+	UPROPERTY(EditAnywhere, Category = "Attack")//确保下面这个组件在编辑器中可见其属性
+	TSubclassOf<AActor> DashProjectileClass;//传送的父类也是AActor所i这里也是可以接受黑洞的
 
-	FTimerHandle FTimerHandle_PrimaryAttack;//计时器
+	UPROPERTY(EditAnywhere, Category = "Attack")//确保下面这个组件在编辑器中可见其属性
+	TSubclassOf<AActor> BlackHoleProjectileClass;//黑洞的父类
+
+	// 动画延迟时间（可编辑，有默认值）
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	float AttackAniDelay = 0.2f;
+
+
+	UPROPERTY(EditAnywhere,Category = "Attack")
+	UAnimMontage* AttackAni;//攻击动画
+
+	FTimerHandle FTimerHandle_PrimaryAttack;//魔法飞弹计时器
+	FTimerHandle TimerHandle_Dash;//传送计时器
+	FTimerHandle TimeHandle_BlackHole;//黑洞
 protected:
 
 	UPROPERTY(VisibleAnywhere)//这是声明在UE编辑器中让这个组件的属性能够被蓝图等组件可见可见
@@ -40,6 +53,8 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	USInteractionComponent* InteractionComp;//将交互的功能交给人物
 
+
+
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category = "Componts")
 	USAttributeComponent* AttributeComp;
 
@@ -49,7 +64,7 @@ protected:
 	void Dash_TimeElapsed();
 
 	void PrimaryAttack();
-	void PrimaryAttack_TimeElapsed();
+	void PrimaryAttack_TimeElapsed();////让飞弹生成延后让飞弹和攻击动画匹配的函数
 
 	void BlackHoleAttack();
 	void BlackholeAttack_TimeElapsed();
@@ -63,13 +78,9 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	//处理释放魔法飞弹的函数
-	void PrimaryAttack();
 
 	//交互宝箱的函数
 	void PrimaryInteract();
-	//让飞弹生成延后让飞弹和攻击动画匹配的函数
-	void PrimaryAttack_TimeElapsed();
 
 public:	
 	// Called every frame
