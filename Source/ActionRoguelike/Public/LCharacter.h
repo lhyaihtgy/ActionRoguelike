@@ -58,16 +58,21 @@ protected:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category = "Componts")
 	USAttributeComponent* AttributeComp;
 
+	UFUNCTION()
+	void OnHealthChanged(AActor* InstigatorActor, USAttributeComponent* OwningComp, float NewHealth, float Delta);//当角色的生命值发生变化的时候需要进行检查
+
 	void SpawnProjectile(TSubclassOf<AActor> ClassTospawn);
 
 	void Dash();
-	void Dash_TimeElapsed();
+	void Dash_TimeElapsed();//传送技能
 
 	void PrimaryAttack();
 	void PrimaryAttack_TimeElapsed();////让飞弹生成延后让飞弹和攻击动画匹配的函数
 
 	void BlackHoleAttack();
-	void BlackholeAttack_TimeElapsed();
+	void BlackholeAttack_TimeElapsed();//黑洞技能
+
+	virtual void PostInitializeComponents() override;//建立角色生命值变化的监听机制​​，确保当角色的生命值发生变化时，能够自动触发相应的处理逻辑
 
 	//声明处理前进/后退的函数
 	void MoveForward(float value);

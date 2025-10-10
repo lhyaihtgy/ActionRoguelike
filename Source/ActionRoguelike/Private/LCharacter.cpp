@@ -30,6 +30,13 @@ ALCharacter::ALCharacter()
 
 	 
 }
+//初始化血量监听机制，建立角色生命值变化的监听机制​​，确保当角色的生命值发生变化时，能够自动触发相应的处理逻辑
+void ALCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();//保证该类的父类已经完成了初始化
+
+	AttributeComp->OnHealthChanged.AddDynamic(this, &ALCharacter::OnHealthChanged);//将血量监听机制进行绑定，当attr中的onhealthchanged事件被调用的时候，这里触发角色类中的生命值变化函数
+}
 
 //处理人物前进和后退的代码
 void ALCharacter::MoveForward(float value)//当输入的值为1的时候代表前进，否则代表的是后退
@@ -57,6 +64,21 @@ void ALCharacter::MoveRight(float value)//第一版本和前进后退函数是�
 	AddMovementInput(rightvector, value);//开始进行旋转，第二版解决的是，第一版左转和右转会围绕着一个点进行圈行旋转的问题，第二版按下a和d按键后会向着摄像机的左边和右边进行移动
 
 	//AddMovementInput(GetActorRightVector(), value);//第一版本和前进后退函数是一致的
+}
+
+void ALCharacter::OnHealthChanged(AActor* InstigatorActor, USAttributeComponent* OwningComp, float NewHealth, float Delta)
+{
+	if (NewHealth <= 0.0f && Delta < 0.0f)
+	{
+		//新的生命值小于等于0了，并且生命值的变化量也是负数了代表角色已经死了
+
+		//获取当前角色的操作器
+		APlayerController* player = Cast<APlayerController>(GetController());
+
+		//禁止角色的输入操作
+		DisableInput(player);
+
+	}
 }
 
 /*
@@ -211,6 +233,7 @@ void ALCharacter::BlackholeAttack_TimeElapsed()
 {
 	SpawnProjectile(BlackHoleProjectileClass);
 }
+
 
 // Called every frame
 void ALCharacter::Tick(float DeltaTime)
