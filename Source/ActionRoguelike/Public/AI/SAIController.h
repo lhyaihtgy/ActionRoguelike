@@ -18,7 +18,7 @@ protected:
 
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly,Category = "AI")
 	UBehaviorTree* BehaviorTree;
 	
 };
