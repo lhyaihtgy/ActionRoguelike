@@ -35,8 +35,11 @@ void USBTService_CheckAttackRange::TickNode(UBehaviorTreeComponent& OwnerComp, u
 
 					float DistanceTo = FVector::Distance(TargetActor->GetActorLocation(), AIPawn->GetActorLocation());//计算ai和actor之间的欧几里得距离
 					bool bwithinRange = (DistanceTo < 2000.0f);//是否存在2000单位阈值以内
+					
+					bool bHasLOS = Mycontroller->LineOfSightTo(TargetActor);//检测AI控制器是否对目标角色有直接视线（Line of Sight）​​。
+
 					//更新ai数据核心中的值
-					BlackBoardComp->SetValueAsBool(AttackRangeKey.SelectedKeyName, bwithinRange);
+					BlackBoardComp->SetValueAsBool(AttackRangeKey.SelectedKeyName, (bwithinRange&&bHasLOS));//只有当ai对目标角色有直接射线，以及这个ai距离角色之间的距离大于2000.0f时，会将ai共享数据库中的值修改为true
 				}
 			}
 
